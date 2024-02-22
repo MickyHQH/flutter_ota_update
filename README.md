@@ -1,3 +1,23 @@
+# flutter_ota_update
+This custom from [ota_update](https://pub.dartlang.org/packages/ota_update)
+
+Import from pubspec.yaml
+
+```yaml
+ota_update:
+  git:
+  url: https://github.com/MickyHQH/flutter_ota_update
+  ref: master
+```
+
+## Features:
+#### Reinstall:
+  void reinstallApk(String fileDestination) <br/> <br/>
+  In case your app goto background and the download process still run. The file is downloaded successful and user comeback your app, installing file does not run auto. You need call reinstallApk to continue process. <br/> <br/>
+  Param:
+  fileDestination: get from the last OtaEvent response
+<br/><br/>
+
 # ota_update
 
 [![pub package](https://img.shields.io/pub/v/ota_update.svg)](https://pub.dartlang.org/packages/ota_update)
