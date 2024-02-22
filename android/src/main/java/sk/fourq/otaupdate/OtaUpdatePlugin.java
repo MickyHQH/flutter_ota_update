@@ -129,6 +129,16 @@ public class OtaUpdatePlugin implements FlutterPlugin, ActivityAware, EventChann
                 reportError(OtaStatus.CANCELED, "Call was canceled using cancel()", null);
             }
             result.success(null);
+        } else if (call.method.equals("reinstallApk")) {
+            if (call.arguments == null) {
+                Log.e(TAG, "Cant find arguments in reinstallApk method.");
+                return;
+            }
+            Map<String, Object> map = (Map<String, Object>) call.arguments;
+            String fileDestination = (String) map.get("fileDestination");
+            if (fileDestination != null) {
+                executeDownload(fileDestination);
+            }
         } else {
             result.notImplemented();
         }
@@ -212,7 +222,7 @@ public class OtaUpdatePlugin implements FlutterPlugin, ActivityAware, EventChann
      * Execute download and start installation. This method is called either from onListen method
      * or from onRequestPermissionsResult if user had to grant permissions.
      */
-    private void executeDownload() {
+    private void executeDownload(String fileDestination) {
         try {
             if (currentCall != null) {
                 reportError(OtaStatus.ALREADY_RUNNING_ERROR, "Another download (call) is already running", null);
@@ -227,6 +237,11 @@ public class OtaUpdatePlugin implements FlutterPlugin, ActivityAware, EventChann
             //DELETE APK FILE IF IT ALREADY EXISTS
             final File file = new File(destination);
             if (file.exists()) {
+                if (fileDestination != null && fileDestination.equals(destination)) {
+                    Log.d(TAG, "reinstall exist file");
+                    onDownloadComplete(destination, fileUri);
+                    return;
+                }
                 if (!file.delete()) {
                     Log.e(TAG, "WARNING: unable to delete old apk file before starting OTA");
                 }
@@ -350,13 +365,13 @@ public class OtaUpdatePlugin implements FlutterPlugin, ActivityAware, EventChann
             intent.setDataAndType(fileUri, "application/vnd.android.package-archive");
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         }
+        context.startActivity(intent);
         //SEND INSTALLING EVENT
         if (progressSink != null) {
             //NOTE: We have to start intent before sending event to stream
             //if application tries to programatically terminate app it may produce race condition
             //and application may end before intent is dispatched
-            context.startActivity(intent);
-            progressSink.success(Arrays.asList("" + OtaStatus.INSTALLING.ordinal(), ""));
+            progressSink.success(Arrays.asList("" + OtaStatus.INSTALLING.ordinal(), "", downloadedFile.getPath()));
             progressSink.endOfStream();
             progressSink = null;
         }

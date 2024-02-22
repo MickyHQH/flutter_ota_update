@@ -22,6 +22,17 @@ class OtaUpdate {
     return _methodChannel.invokeMethod<void>('cancel');
   }
 
+  /// In case your app goto background and the download process still run.
+  /// The file is downloaded successful and user comeback your app, installing file does not run auto.
+  /// You need call this method to continue process.
+  /// param:
+  ///   fileDestination: get from the last OtaEvent response
+  void reinstallApk(String fileDestination) {
+    _methodChannel.invokeMethod<void>('reinstallApk', <String, dynamic>{
+      'fileDestination': fileDestination,
+    });
+  }
+
   /// Execute download and instalation of the plugin.
   /// Download progress and all success or error states are publish in stream as OtaEvent
   Stream<OtaEvent> execute(
@@ -61,20 +72,23 @@ class OtaUpdate {
   }
 
   OtaEvent _toOtaEvent(List<String?> event) {
-    return OtaEvent(OtaStatus.values[int.parse(event[0]!)], event[1]);
+    return OtaEvent(OtaStatus.values[int.parse(event[0]!)], event[1], event.length >= 3 ? event[2] : null);
   }
 }
 
 ///Event describing current status
 class OtaEvent {
   ///Constructor for OtaEvent
-  OtaEvent(this.status, this.value);
+  const OtaEvent(this.status, this.value, [this.fileDestination]);
 
   /// Current status as enum value
-  OtaStatus status;
+  final OtaStatus status;
 
   /// Additional status info e.g. percents downloaded or error message (can be null)
-  String? value;
+  final String? value;
+
+  /// just has data when INSTALLING
+  final String? fileDestination;
 }
 
 /// Enum values describing states
